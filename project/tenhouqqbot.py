@@ -22,9 +22,14 @@ class BotConnector(object):
         if 'WAIT_TO_END' in message:
             self.qbot.SendTo(qq_group, '操你们妈啊，喊3缺1叫我，然后又没人来')
         if 'FINAL_RESULT' in message:
-            result = re.search(r'FINAL_RESULT\s*(.*)', message).group(1)
+            result_list = re.search(r'FINAL_RESULT\s*(.*)', message).group(1)
             self.qbot.SendTo(qq_group, '刚刚跟你们这群菜鸡打了一局，结果感人')
-            self.qbot.SendTo(qq_group, result)
+            self.qbot.SendTo(qq_group, result_list)
+            result = re.search(r'\[(.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*)\]', result_list)
+            if result.group(10) == 'Lattish' and float(result.group(12)) < 0:
+                self.qbot.SendTo(qq_group, '你们竟然敢打飞我？？？烟了，全都烟了！！！')
+                members = [x for x in self.qbot.List(qq_group) if x.role == '普通成员']
+                self.qbot.GroupShut(qq_group, members, t=60)
 
 
 class TenhouThread (threading.Thread):
@@ -70,9 +75,9 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '网页版：http://tenhou.net/3/?L2587')
                 bot.SendTo(contact, 'Flash 版：http://tenhou.net/0/?L2587')
             elif "烟" in content:
-                bot.SendTo(contact,'剐内镑呢，给他烟上')
+                pass
             else:
-                if random.random > 0.5:
+                if random.random() > 0.5:
                     bot.SendTo(contact, '操你妈要求真多')
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
