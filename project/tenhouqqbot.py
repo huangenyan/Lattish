@@ -42,7 +42,7 @@ def onQQMessage(bot, contact, member, content):
     global botConnector
     if contact.qq == '625219436':
         qq_group = contact
-        if "Lattish" in content or "@ME" in content:
+        if "Lattish" in content or "@ME" in content or "yunini" in content:
             if "缺人" in content:
                 if not is_playing:
                     bot.SendTo(contact, '3缺1再叫我，谢谢，你说缺人谁他妈知道你缺几个')
@@ -66,6 +66,8 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '不会自己看群公告啊，傻逼')
                 bot.SendTo(contact, '网页版：http://tenhou.net/3/?L2587')
                 bot.SendTo(contact, 'Flash 版：http://tenhou.net/0/?L2587')
+            elif "烟" in content:
+				bot.SendTo(contact,'剐内镑呢，给他烟上')
             else:
                 bot.SendTo(contact, '操你妈要求真多')
 
