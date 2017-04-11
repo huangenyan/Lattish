@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from qqbot import QQBotSlot as qqbotslot, QQBot
 from tenhoubot import main as starttenhou
 import threading

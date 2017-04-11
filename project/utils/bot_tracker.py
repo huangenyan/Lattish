@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class TenhouBotSingleton(object):
     instance = None
 
