@@ -14,6 +14,8 @@ from mahjong.meld import Meld
 from mahjong.tile import TilesConverter
 from tenhou.decoder import TenhouDecoder
 
+from utils.bot_tracker import bot_tracker
+
 logger = logging.getLogger('tenhou')
 
 
@@ -130,11 +132,16 @@ class TenhouClient(Client):
                 logger.info('Looking for the game...')
 
             start_time = datetime.datetime.now()
-
+            bot_tracker.bot.on_receive_message('WAIT_READY')
             while self.looking_for_game:
                 sleep(1)
 
                 messages = self._get_multiple_messages()
+
+                if bot_tracker.bot.stop_wait:
+                    bot_tracker.bot.on_receive_message('WAIT_STOP')
+                    self.end_game()
+                    return
 
                 for message in messages:
                     if '<REJOIN' in message:
@@ -179,6 +186,7 @@ class TenhouClient(Client):
         # and try again later
         if self.looking_for_game:
             logger.error('Game is not started. Can\'t find the game')
+            bot_tracker.bot.on_receive_message('WAIT_TO_END')
             self.end_game()
             return
 
@@ -377,7 +385,7 @@ class TenhouClient(Client):
                 return
 
         logger.info('Final results: {}'.format(self.table.get_players_sorted_by_scores()))
-
+        bot_tracker.bot.on_receive_message('FINAL_RESULT {}'.format(self.table.get_players_sorted_by_scores()))
         # we need to finish the game, and only after this try to send statistics
         # if order will be different, tenhou will return 404 on log download endpoint
         self.end_game()

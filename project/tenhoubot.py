@@ -8,6 +8,7 @@ from tenhou.main import connect_and_play
 from utils.logger import set_up_logging
 from utils.settings_handler import settings
 
+from utils.bot_tracker import bot_tracker
 
 def parse_args_and_set_up_settings():
     parser = OptionParser()
@@ -56,10 +57,10 @@ def parse_args_and_set_up_settings():
         settings.LOBBY = opts.championship
 
 
-def main():
-    parse_args_and_set_up_settings()
+def main(bot=None):
+    # parse_args_and_set_up_settings()
+    bot_tracker.bot = bot
     set_up_logging()
-
     connect_and_play()
 
 

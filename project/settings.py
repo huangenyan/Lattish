@@ -3,9 +3,9 @@
 TENHOU_HOST = '133.242.10.78'
 TENHOU_PORT = 10080
 
-USER_ID = 'NoName'
+USER_ID = 'ID334B3F22-XfL3J9M2'
 
-LOBBY = '0'
+LOBBY = '2587'
 WAITING_GAME_TIMEOUT_MINUTES = 10
 
 # in tournament mode bot is not trying to search the game
@@ -47,7 +47,7 @@ ENABLE_AI = True
 # for dynamic game type selection (based on the bot rank and rate)
 # you can use:
 # GAME_TYPE = None
-GAME_TYPE = '1'
+GAME_TYPE = '9'
 
 # game related settings
 # TODO put them to the separate settings files
