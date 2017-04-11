@@ -2,6 +2,7 @@ from qqbot import QQBotSlot as qqbotslot, QQBot
 from tenhoubot import main as starttenhou
 import threading
 import re
+import random
 
 is_playing = False
 qq_group = None
@@ -69,7 +70,10 @@ def onQQMessage(bot, contact, member, content):
             elif "烟" in content:
 				bot.SendTo(contact,'剐内镑呢，给他烟上')
             else:
-                bot.SendTo(contact, '操你妈要求真多')
+                if (random.random>0.5):
+                    bot.SendTo(contact, '操你妈要求真多')
+                else:
+                    bot.SendTo(contact, '哎呀人家不懂了啦')
 
 
 if __name__ == '__main__':
