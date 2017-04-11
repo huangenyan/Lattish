@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from qqbot import QQBotSlot as qqbotslot, QQBot
 from tenhoubot import main as starttenhou
 import threading
@@ -51,7 +49,9 @@ def onQQMessage(bot, contact, member, content):
     if contact.qq == '625219436':
         qq_group = contact
         if "Lattish" in content or "@ME" in content or "yunini" in content:
-            if "缺人" in content:
+            if "在吗" in content or "zaima" in content:
+                bot.SendTo(contact,'buzai cmn')
+            elif "缺人" in content:
                 if not is_playing:
                     bot.SendTo(contact, '3缺1再叫我，谢谢，你说缺人谁他妈知道你缺几个')
                 else:
@@ -74,13 +74,13 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '不会自己看群公告啊，傻逼')
                 bot.SendTo(contact, '网页版：http://tenhou.net/3/?L2587')
                 bot.SendTo(contact, 'Flash 版：http://tenhou.net/0/?L2587')
-            elif "烟" in content:
-                pass
             else:
                 if random.random() > 0.5:
                     bot.SendTo(contact, '操你妈要求真多')
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
+        if random.random() > 0.9:
+            bot.SendTo(contact, content)
 
 
 if __name__ == '__main__':
