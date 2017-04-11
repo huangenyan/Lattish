@@ -70,9 +70,9 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '网页版：http://tenhou.net/3/?L2587')
                 bot.SendTo(contact, 'Flash 版：http://tenhou.net/0/?L2587')
             elif "烟" in content:
-				bot.SendTo(contact,'剐内镑呢，给他烟上')
+                bot.SendTo(contact,'剐内镑呢，给他烟上')
             else:
-                if (random.random>0.5):
+                if random.random > 0.5:
                     bot.SendTo(contact, '操你妈要求真多')
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
