@@ -92,16 +92,23 @@ def onQQMessage(bot, contact, member, content):
             bot.SendTo(contact, content)
 
         if '烟' in content or '🚬' in content:
-            if random.random() < 0.3:
-                if member.role == '普通成员':
+            if member.role == '普通成员':
+                if random.random() < 0.1:
                     bot.GroupShut(qq_group, [member], t=60)
-                    bot.SendTo(qq_group, '还真当我不懂啊，智障')
-            elif random.random() < 0.35:
-                if member.role == '普通成员':
+                    if '烟呢' in content:
+                        bot.SendTo(qq_group, '这呢')
+                    else:
+                        bot.SendTo(qq_group, '还真当我不懂啊，智障')
+                elif random.random() < 0.12:
                     bot.GroupShut(qq_group, [member], t=3600)
-                    bot.SendTo(qq_group, '还真当我不懂啊，智障')
+                    if '烟呢' in content:
+                        bot.SendTo(qq_group, '这呢')
+                    else:
+                        bot.SendTo(qq_group, '今天试试这电子烟怎么样？')
+                else:
+                    bot.SendTo(qq_group, "烟？什么意思？完全不懂啊")
             else:
-                bot.SendTo(qq_group, "烟？什么意思？完全不懂啊")
+                bot.SendTo(qq_group, "别他妈跟我提烟好吗")
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
