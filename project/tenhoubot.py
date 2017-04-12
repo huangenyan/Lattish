@@ -60,7 +60,9 @@ def parse_args_and_set_up_settings():
 def main(bot=None):
     # parse_args_and_set_up_settings()
     bot_tracker.bot = bot
-    set_up_logging()
+    if bot_tracker.bot.first_time:
+        set_up_logging()
+        bot_tracker.bot.first_time = False
     connect_and_play()
 
 

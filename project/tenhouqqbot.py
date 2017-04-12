@@ -3,16 +3,17 @@ from tenhoubot import main as starttenhou
 import threading
 import re
 import random
+import time
 
 is_playing = False
 qq_group = None
-
 
 class BotConnector(object):
 
     def __init__(self, qqbot):
         self.qbot = qqbot
         self.stop_wait = False
+        self.first_time = True
 
     def on_receive_message(self, message):
         if 'WAIT_READY' in message:
@@ -24,31 +25,31 @@ class BotConnector(object):
             self.qbot.SendTo(qq_group, '刚刚跟你们这群菜鸡打了一局，结果感人')
             self.qbot.SendTo(qq_group, result_list)
             result = re.search(r'\[(.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*)\]', result_list)
-            if result.group(10) == 'Lattish' and float(result.group(12)) < 0:
+            if result.group(10) == 'Lattish' and float(result.group(12).replace(' ', '')) < 0:
                 self.qbot.SendTo(qq_group, '你们竟然敢打飞我？？？烟了，全都烟了！！！')
                 members = [x for x in self.qbot.List(qq_group) if x.role == '普通成员']
                 self.qbot.GroupShut(qq_group, members, t=60)
 
 
 class TenhouThread (threading.Thread):
-
     def __init__(self, connector):
         threading.Thread.__init__(self)
         self.connector = connector
 
     def run(self):
         global is_playing
-        is_playing = True
         starttenhou(self.connector)
         is_playing = False
+        botConnector.stop_wait = False
 
 @qqbotslot
 def onQQMessage(bot, contact, member, content):
     global qq_group
     global botConnector
+    global is_playing
     if contact.qq == '625219436':
         qq_group = contact
-        if "Lattish" in content or "@ME" in content or "yunini" in content:
+        if "Lattish" in content or "@ME" in content or "yunini" in content or 'lattish' in content:
             if "在吗" in content or "zaima" in content:
                 bot.SendTo(contact,'buzai cmn')
             elif "缺人" in content:
@@ -58,9 +59,9 @@ def onQQMessage(bot, contact, member, content):
                     bot.SendTo(contact, '我正在跟别人干着呢，叫也没用')
             elif "3缺1" in content or "三缺一" in content:
                 if not is_playing:
+                    is_playing = True
                     bot.SendTo(contact, '你群打个麻将都贵阳，知道了，这就上线')
                     tenhou_thread = TenhouThread(botConnector)
-                    tenhou_thread.setDaemon(True)
                     tenhou_thread.start()
                 else:
                     bot.SendTo(contact, '我正在跟别人干着呢，叫也没用')
@@ -79,8 +80,14 @@ def onQQMessage(bot, contact, member, content):
                     bot.SendTo(contact, '操你妈要求真多')
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
-        if random.random() > 0.9:
+        elif random.random() > 0.98:
             bot.SendTo(contact, content)
+
+        if '烟' in content and member.role == '普通成员':
+            if random.random < 0.3:
+                bot.GroupShut(qq_group, [member], t=60)
+            elif random.random < 0.35:
+                bot.GroupShut(qq_group, [member], t=36000)
 
 
 if __name__ == '__main__':
