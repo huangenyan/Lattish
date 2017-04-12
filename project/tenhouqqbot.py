@@ -91,13 +91,17 @@ def onQQMessage(bot, contact, member, content):
         elif random.random() > 0.98:
             bot.SendTo(contact, content)
 
-        if '烟' in content and member.role == '普通成员':
-            if random.random < 0.3:
-                bot.GroupShut(qq_group, [member], t=60)
-            elif random.random < 0.35:
-                bot.GroupShut(qq_group, [member], t=3600)
-
-
+        if '烟' in content or '🚬' in content:
+            if random.random() < 0.3:
+                if member.role == '普通成员':
+                    bot.GroupShut(qq_group, [member], t=60)
+                    bot.SendTo(qq_group, '还真当我不懂啊，智障')
+            elif random.random() < 0.35:
+                if member.role == '普通成员':
+                    bot.GroupShut(qq_group, [member], t=3600)
+                    bot.SendTo(qq_group, '还真当我不懂啊，智障')
+            else:
+                bot.SendTo(qq_group, "烟？什么意思？完全不懂啊")
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
