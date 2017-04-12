@@ -4,7 +4,6 @@ import threading
 import re
 import random
 import time
-
 is_playing = False
 qq_group = None
 
@@ -23,9 +22,18 @@ class BotConnector(object):
         if 'FINAL_RESULT' in message:
             result_list = re.search(r'FINAL_RESULT\s*(.*)', message).group(1)
             self.qbot.SendTo(qq_group, '刚刚跟你们这群菜鸡打了一局，结果感人')
-            self.qbot.SendTo(qq_group, result_list)
             result = re.search(r'\[(.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*)\]', result_list)
+            for i in [1, 4, 7, 10]:
+                name = result.group(i)
+                point = result.group(i+1)
+                score = result.group(i+2)
+                if name == 'Lattish':
+                    name = '老子我'
+                formatted_result = '%s: %s (%s)' % (name, score, point)
+                time.sleep(0.3)
+                self.qbot.SendTo(qq_group, formatted_result)
             if result.group(10) == 'Lattish' and float(result.group(12).replace(' ', '')) < 0:
+                time.sleep(1)
                 self.qbot.SendTo(qq_group, '你们竟然敢打飞我？？？烟了，全都烟了！！！')
                 members = [x for x in self.qbot.List(qq_group) if x.role == '普通成员']
                 self.qbot.GroupShut(qq_group, members, t=60)
@@ -87,7 +95,7 @@ def onQQMessage(bot, contact, member, content):
             if random.random < 0.3:
                 bot.GroupShut(qq_group, [member], t=60)
             elif random.random < 0.35:
-                bot.GroupShut(qq_group, [member], t=36000)
+                bot.GroupShut(qq_group, [member], t=3600)
 
 
 if __name__ == '__main__':
