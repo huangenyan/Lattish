@@ -35,7 +35,7 @@ class BotConnector(object):
             if result.group(10) == 'Lattish' and float(result.group(12).replace(' ', '')) < 0:
                 time.sleep(1)
                 self.qbot.SendTo(qq_group, '你们竟然敢打飞我？？？烟了，全都烟了！！！')
-                members = [x for x in self.qbot.List(qq_group) if x.role == '普通成员']
+                members = [x for x in self.qbot.List(qq_group) if x.role == '成员']
                 self.qbot.GroupShut(qq_group, members, t=60)
 
 
@@ -103,7 +103,7 @@ def onQQMessage(bot, contact, member, content):
             bot.SendTo(contact, content)
 
         if '烟' in content or '🚬' in content:
-            if member.role == '普通成员':
+            if member.role == '成员':
                 num = random.random()
                 if num < 0.1:
                     bot.GroupShut(contact, [member], t=60)
@@ -136,5 +136,5 @@ def onQQMessage(bot, contact, member, content):
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
-    bot.Login(user='Lattish')
+    bot.Login(qq='284321589')
     bot.Run()
