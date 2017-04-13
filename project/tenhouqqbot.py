@@ -121,7 +121,7 @@ def onQQMessage(bot, contact, member, content):
                     bot.SendTo(contact, "烟？什么意思？完全不懂啊")
             else:
                 bot.SendTo(contact, "别他妈跟我提烟好吗")
-        if '麻吗' in content or "麻？" in content:
+        if '麻吗' in content or "麻？" in content or "棍吗" in content or "棍？" in content:
             num = random.random()
             if num < 0.5:
                 bot.SendTo(contact, '搞事搞事搞事')
