@@ -136,5 +136,5 @@ def onQQMessage(bot, contact, member, content):
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
-    bot.Login(qq='284321589')
+    bot.Login(user='Lattish')
     bot.Run()
