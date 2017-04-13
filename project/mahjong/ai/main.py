@@ -10,17 +10,18 @@ from mahjong.ai.strategies.honitsu import HonitsuStrategy
 from mahjong.ai.strategies.main import BaseStrategy
 from mahjong.ai.strategies.tanyao import TanyaoStrategy
 from mahjong.ai.strategies.yakuhai import YakuhaiStrategy
-from mahjong.constants import HAKU, CHUN, HATSU
+from mahjong.constants import HAKU, CHUN, HATSU, AKA_DORA_LIST
 from mahjong.hand import HandDivider, FinishedHand
+from mahjong.meld import Meld
 from mahjong.tile import TilesConverter
-from mahjong.utils import is_pair
+from mahjong.utils import is_pair, is_pon
 from utils.settings_handler import settings
 
 logger = logging.getLogger('ai')
 
 
 class MainAI(BaseAI):
-    version = '0.2.4'
+    version = '0.2.5'
 
     agari = None
     shanten = None
@@ -54,15 +55,14 @@ class MainAI(BaseAI):
     def discard_tile(self):
         results, shanten = self.calculate_outs(self.player.tiles,
                                                self.player.closed_hand,
-                                               self.player.is_open_hand)
-        we_can_call_riichi = shanten == 0 and self.player.can_call_riichi()
+                                               self.player.open_hand_34_tiles)
 
         selected_tile = self.process_discard_options_and_select_tile_to_discard(results, shanten)
 
         # bot think that there is a threat on the table
         # and better to fold
         # if we can't find safe tiles, let's continue to build our hand
-        if self.defence.should_go_to_defence_mode(selected_tile) and not we_can_call_riichi:
+        if self.defence.should_go_to_defence_mode(selected_tile):
             if not self.in_defence:
                 logger.info('We decided to fold against other players')
                 self.in_defence = True
@@ -77,7 +77,6 @@ class MainAI(BaseAI):
 
     def process_discard_options_and_select_tile_to_discard(self, results, shanten):
         tiles_34 = TilesConverter.to_34_array(self.player.tiles)
-        we_can_call_riichi = shanten == 0 and self.player.can_call_riichi()
 
         # we had to update tiles value there
         # because it is related with shanten number
@@ -87,7 +86,7 @@ class MainAI(BaseAI):
 
         # current strategy can affect on our discard options
         # so, don't use strategy specific choices for calling riichi
-        if self.current_strategy and not we_can_call_riichi:
+        if self.current_strategy:
             results = self.current_strategy.determine_what_to_discard(self.player.closed_hand,
                                                                       results,
                                                                       shanten,
@@ -96,11 +95,11 @@ class MainAI(BaseAI):
 
         return self.chose_tile_to_discard(results)
 
-    def calculate_outs(self, tiles, closed_hand, is_open_hand=False):
+    def calculate_outs(self, tiles, closed_hand, open_sets_34=None):
         """
         :param tiles: array of tiles in 136 format
         :param closed_hand: array of tiles in 136 format
-        :param is_open_hand: boolean flag
+        :param open_sets_34: array of array with tiles in 34 format
         :return:
         """
         tiles_34 = TilesConverter.to_34_array(tiles)
@@ -108,14 +107,13 @@ class MainAI(BaseAI):
         is_agari = self.agari.is_agari(tiles_34, self.player.open_hand_34_tiles)
 
         results = []
-
         for hand_tile in range(0, 34):
             if not closed_tiles_34[hand_tile]:
                 continue
 
             tiles_34[hand_tile] -= 1
 
-            shanten = self.shanten.calculate_shanten(tiles_34, is_open_hand, self.player.open_hand_34_tiles)
+            shanten = self.shanten.calculate_shanten(tiles_34, open_sets_34)
 
             waiting = []
             for j in range(0, 34):
@@ -123,9 +121,7 @@ class MainAI(BaseAI):
                     continue
 
                 tiles_34[j] += 1
-                if self.shanten.calculate_shanten(tiles_34,
-                                                  is_open_hand,
-                                                  self.player.open_hand_34_tiles) == shanten - 1:
+                if self.shanten.calculate_shanten(tiles_34, open_sets_34) == shanten - 1:
                     waiting.append(j)
                 tiles_34[j] -= 1
 
@@ -141,7 +137,7 @@ class MainAI(BaseAI):
         if is_agari:
             shanten = Shanten.AGARI_STATE
         else:
-            shanten = self.shanten.calculate_shanten(tiles_34, is_open_hand, self.player.open_hand_34_tiles)
+            shanten = self.shanten.calculate_shanten(tiles_34, open_sets_34)
 
         return results, shanten
 
@@ -242,20 +238,26 @@ class MainAI(BaseAI):
         self.player.in_tempai = self.player.ai.previous_shanten == 0
         return selected_tile.find_tile_in_hand(closed_hand)
 
-    def estimate_hand_value(self, win_tile, tiles=None):
+    def estimate_hand_value(self, win_tile, tiles=None, call_riichi=False):
         """
         :param win_tile: 34 tile format
         :param tiles:
+        :param call_riichi:
         :return:
         """
         win_tile *= 4
+        # we don't need to think, that our waiting is aka dora
+        if win_tile in AKA_DORA_LIST:
+            win_tile += 1
+
         if not tiles:
             tiles = self.player.tiles
+
         tiles += [win_tile]
         result = self.finished_hand.estimate_hand_value(tiles=tiles,
                                                         win_tile=win_tile,
                                                         is_tsumo=False,
-                                                        is_riichi=False,
+                                                        is_riichi=call_riichi,
                                                         is_dealer=self.player.is_dealer,
                                                         open_sets=self.player.open_hand_34_tiles,
                                                         player_wind=self.player.player_wind,
@@ -273,12 +275,14 @@ class MainAI(BaseAI):
             return True
 
         waiting = self.waiting[0]
-        tiles_34 = TilesConverter.to_34_array(self.player.closed_hand + [waiting * 4])
+        tiles = self.player.closed_hand + [waiting * 4]
+        closed_melds = [x for x in self.player.melds if not x.opened]
+        for meld in closed_melds:
+            tiles.extend(meld.tiles[:3])
+
+        tiles_34 = TilesConverter.to_34_array(tiles)
 
         results = self.hand_divider.divide_hand(tiles_34, [], [])
-        if not results:
-            return False
-
         result = results[0]
 
         count_of_pairs = len([x for x in result if is_pair(x)])
@@ -293,6 +297,69 @@ class MainAI(BaseAI):
                 return False
 
         return True
+
+    def can_call_kan(self, tile, open_kan):
+        """
+        Method will decide should we call a kan,
+        or upgrade pon to kan
+        :param tile: 136 tile format
+        :param open_kan: boolean
+        :return: kan type
+        """
+        # we don't need to add dora for other players
+        if self.player.ai.in_defence:
+            return None
+
+        if open_kan:
+            # we don't want to start open our hand from called kan
+            if not self.player.is_open_hand:
+                return None
+
+            # there is no sense to call open kan when we are not in tempai
+            if not self.player.in_tempai:
+                return None
+
+            # we have a bad wait, rinshan chance is low
+            if len(self.waiting) < 2:
+                return None
+
+        tile_34 = tile // 4
+        tiles_34 = TilesConverter.to_34_array(self.player.tiles)
+        closed_hand_34 = TilesConverter.to_34_array(self.player.closed_hand)
+        pon_melds = [x for x in self.player.open_hand_34_tiles if is_pon(x)]
+
+        # let's check can we upgrade opened pon to the kan
+        if pon_melds:
+            for meld in pon_melds:
+                # tile is equal to our already opened pon,
+                # so let's call chankan!
+                if tile_34 in meld:
+                    return Meld.CHANKAN
+
+        count_of_needed_tiles = 4
+        # for open kan 3 tiles is enough to call a kan
+        if open_kan:
+            count_of_needed_tiles = 3
+
+        # we have 3 tiles in our hand,
+        # so we can try to call closed meld
+        if closed_hand_34[tile_34] == count_of_needed_tiles:
+            if not open_kan:
+                # to correctly count shanten in the hand
+                # we had do subtract drown tile
+                tiles_34[tile_34] -= 1
+
+            melds = self.player.open_hand_34_tiles
+            previous_shanten = self.shanten.calculate_shanten(tiles_34, melds)
+
+            melds += [[tile_34, tile_34, tile_34]]
+            new_shanten = self.shanten.calculate_shanten(tiles_34, melds)
+
+            # called kan will not ruin our hand
+            if new_shanten <= previous_shanten:
+                return Meld.KAN
+
+        return None
 
     @property
     def valued_honors(self):

@@ -106,6 +106,7 @@ class AITestCase(unittest.TestCase, TestMixin):
 
         tile = self._string_to_136_tile(sou='3')
         meld, discard_option = player.try_to_call_meld(tile, True)
+        self.assertNotEqual(meld, None)
         self.assertEqual(self._to_string(meld.tiles), '123s')
         player.add_called_meld(meld)
         player.discard_tile(discard_option)
@@ -228,3 +229,123 @@ class AITestCase(unittest.TestCase, TestMixin):
         tile = 77
         meld, _ = player.try_to_call_meld(tile, True)
         self.assertIsNotNone(meld)
+
+    def test_upgrade_opened_pon_to_kan(self):
+        table = Table()
+        player = table.player
+
+        tiles = self._string_to_136_array(man='34445', sou='123456', pin='89')
+        player.init_hand(tiles)
+        tile = self._string_to_136_tile(man='4')
+        player.draw_tile(tile)
+
+        self.assertEqual(player.can_call_kan(tile, False), None)
+
+        player.add_called_meld(self._make_meld(Meld.PON, self._string_to_136_array(man='444')))
+
+        self.assertEqual(player.can_call_kan(tile, False), Meld.CHANKAN)
+
+    def test_call_closed_kan(self):
+        table = Table()
+        player = table.player
+
+        tiles = self._string_to_136_array(man='12223', sou='111456', pin='12')
+        player.init_hand(tiles)
+        tile = self._string_to_136_tile(man='2')
+        player.draw_tile(tile)
+
+        # it is pretty stupid to call closed kan with 2m
+        self.assertEqual(player.can_call_kan(tile, False), None)
+
+        tiles = self._string_to_136_array(man='12223', sou='111456', pin='12')
+        player.init_hand(tiles)
+        tile = self._string_to_136_tile(sou='1')
+        player.draw_tile(tile)
+
+        # call closed kan with 1s is fine
+        self.assertEqual(player.can_call_kan(tile, False), Meld.KAN)
+
+    def test_opened_kan(self):
+        table = Table()
+        player = table.player
+
+        tiles = self._string_to_136_array(man='299', sou='111456', pin='1', honors='111')
+        player.init_hand(tiles)
+
+        # to rebuild all caches
+        player.draw_tile(self._string_to_136_tile(pin='9'))
+        player.discard_tile()
+
+        # our hand is closed, we don't need to call opened kan here
+        tile = self._string_to_136_tile(sou='1')
+        self.assertEqual(player.can_call_kan(tile, True), None)
+
+        player.add_called_meld(self._make_meld(Meld.PON, self._string_to_136_array(honors='111')))
+
+        # our hand is open, but it is not tempai
+        # we don't need to open kan here
+        tile = self._string_to_136_tile(sou='1')
+        self.assertEqual(player.can_call_kan(tile, True), None)
+
+        table = Table()
+        player = table.player
+
+        tiles = self._string_to_136_array(man='2399', sou='111456', honors='111')
+        player.init_hand(tiles)
+        player.add_called_meld(self._make_meld(Meld.PON, self._string_to_136_array(honors='111')))
+
+        # to rebuild all caches
+        player.draw_tile(self._string_to_136_tile(pin='9'))
+        player.discard_tile()
+
+        # our hand is open, in tempai and with a good wait
+        tile = self._string_to_136_tile(sou='1')
+        self.assertEqual(player.can_call_kan(tile, True), Meld.KAN)
+
+    def test_closed_kan_and_riichi(self):
+        table = Table()
+        table.count_of_remaining_tiles = 60
+        player = table.player
+        player.scores = 25000
+
+        kan_tiles = self._string_to_136_array(pin='7777')
+        tiles = self._string_to_136_array(pin='568', sou='1235788') + kan_tiles[:3]
+        player.init_hand(tiles)
+
+        # +3 to avoid tile duplication of 7 pin
+        tile = kan_tiles[3]
+        player.draw_tile(tile)
+
+        kan_type = player.can_call_kan(tile, False)
+        self.assertEqual(kan_type, Meld.KAN)
+
+        meld = Meld()
+        meld.type = Meld.KAN
+        meld.tiles = kan_tiles
+        meld.called_tile = tile
+        meld.who = 0
+        meld.from_who = 0
+        meld.opened = False
+
+        # replacement from the dead wall
+        player.draw_tile(self._string_to_136_tile(pin='4'))
+        table.add_called_meld(meld.who, meld)
+        discard = player.discard_tile()
+
+        self.assertEqual(self._to_string([discard]), '8p')
+        self.assertEqual(player.can_call_riichi(), True)
+
+        # with closed kan we can't call riichi
+        player.melds[0].opened = True
+        self.assertEqual(player.can_call_riichi(), False)
+
+    def test_dont_call_kan_in_defence_mode(self):
+        table = Table()
+
+        tiles = self._string_to_136_array(man='12589', sou='111459', pin='12')
+        table.player.init_hand(tiles)
+
+        table.add_called_riichi(1)
+
+        tile = self._string_to_136_tile(sou='1')
+        self.assertEqual(table.player.can_call_kan(tile, False), None)

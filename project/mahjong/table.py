@@ -69,21 +69,16 @@ class Table(object):
 
         # we will decrease count of remaining tiles after called kan
         # because we had to complement dead wall
-        if meld.type == Meld.KAN or meld.type == Meld.CHAKAN:
+        if meld.type == Meld.KAN or meld.type == meld.CHANKAN:
             self.count_of_remaining_tiles -= 1
 
         self.get_player(player_seat).add_called_meld(meld)
 
         tiles = meld.tiles[:]
         # called tile was already added to revealed array
-        # because of discard
-        # for closed kan we will not have called_tile
+        # because it was called on the discard
         if meld.called_tile:
             tiles.remove(meld.called_tile)
-
-        # for chankan we already added 3 tiles
-        if meld.type == Meld.CHAKAN:
-            tiles = [tiles[0]]
 
         for tile in tiles:
             self._add_revealed_tile(tile)

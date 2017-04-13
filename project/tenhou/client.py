@@ -20,6 +20,8 @@ logger = logging.getLogger('tenhou')
 
 
 class TenhouClient(Client):
+    SLEEP_BETWEEN_ACTIONS = 1
+
     statistics = None
     socket = None
     game_is_continue = True
@@ -111,18 +113,18 @@ class TenhouClient(Client):
             if settings.IS_TOURNAMENT:
                 logger.info('Go to the tournament lobby: {}'.format(settings.LOBBY))
                 self._send_message('<CS lobby="{}" />'.format(settings.LOBBY))
-                sleep(2)
+                sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS * 2)
                 self._send_message('<DATE />')
             else:
                 logger.info('Go to the lobby: {}'.format(settings.LOBBY))
                 self._send_message('<CHAT text="{}" />'.format(quote('/lobby {}'.format(settings.LOBBY))))
-                sleep(2)
+                sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS * 2)
 
         if self.reconnected_messages:
             # we already in the game
             self.looking_for_game = False
             self._send_message('<GOK />')
-            sleep(1)
+            sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
         else:
             selected_game_type = self._build_game_type()
             game_type = '{},{}'.format(settings.LOBBY, selected_game_type)
@@ -134,7 +136,7 @@ class TenhouClient(Client):
             start_time = datetime.datetime.now()
             bot_tracker.bot.on_receive_message('WAIT_READY')
             while self.looking_for_game:
-                sleep(1)
+                sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
 
                 messages = self._get_multiple_messages()
 
@@ -200,7 +202,7 @@ class TenhouClient(Client):
         discard_option = None
 
         while self.game_is_continue:
-            sleep(1)
+            sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
             messages = self._get_multiple_messages()
 
             if self.reconnected_messages:
@@ -254,28 +256,44 @@ class TenhouClient(Client):
                         self._send_message('<N type="7" />')
                         continue
 
-                    tile = self.decoder.parse_tile(message)
+                    drawn_tile = self.decoder.parse_tile(message)
 
                     if not main_player.in_riichi:
-                        logger.info('Hand: {}'.format(main_player.format_hand_for_print(tile)))
+                        logger.info('Hand: {}'.format(main_player.format_hand_for_print(drawn_tile)))
 
-                        self.player.draw_tile(tile)
-                        sleep(1)
+                        self.player.draw_tile(drawn_tile)
+                        sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
 
-                        tile = self.player.discard_tile()
-                        logger.info('Discard: {}'.format(TilesConverter.to_one_line_string([tile])))
+                        kan_type = self.player.can_call_kan(drawn_tile, False)
+
+                        discarded_tile = self.player.discard_tile()
+                        logger.info('Discard: {}'.format(TilesConverter.to_one_line_string([discarded_tile])))
+
+                        can_call_riichi = main_player.can_call_riichi()
+
+                        if kan_type:
+                            if kan_type == Meld.CHANKAN:
+                                meld_type = 5
+                            else:
+                                meld_type = 4
+                            # we had to add discarded tile back to the hand
+                            self.player.tiles.append(discarded_tile)
+                            self._send_message('<N type="{}" hai="{}" />'.format(meld_type, drawn_tile))
+                            logger.info('We called a kan set!')
+                            continue
+
+                        # let's call riichi
+                        if can_call_riichi:
+                            self._send_message('<REACH hai="{}" />'.format(discarded_tile))
+                            sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
+                            main_player.in_riichi = True
                     else:
                         # we had to add it to discards, to calculate remaining tiles correctly
-                        self.table.add_discarded_tile(0, tile, True)
-
-                    # let's call riichi and after this discard tile
-                    if main_player.can_call_riichi():
-                        self._send_message('<REACH hai="{}" />'.format(tile))
-                        sleep(2)
-                        main_player.in_riichi = True
+                        discarded_tile = drawn_tile
+                        self.table.add_discarded_tile(0, discarded_tile, True)
 
                     # tenhou format: <D p="133" />
-                    self._send_message('<D p="{}"/>'.format(tile))
+                    self._send_message('<D p="{}"/>'.format(discarded_tile))
 
                     logger.info('Remaining tiles: {}'.format(self.table.count_of_remaining_tiles))
 
@@ -292,15 +310,8 @@ class TenhouClient(Client):
 
                 # the end of round
                 if '<AGARI' in message or '<RYUUKYOKU' in message:
-                    sleep(5)
+                    sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS * 7)
                     self._send_message('<NEXTREADY />')
-
-                # for now I'm not sure about what sets was suggested to call with this numbers
-                # will find it out later
-                not_allowed_open_sets = ['t="2"', 't="3"', 't="5"', 't="7"']
-                if any(i in message for i in not_allowed_open_sets):
-                    sleep(1)
-                    self._send_message('<N />')
 
                 # set was called
                 if '<N who=' in message:
@@ -311,19 +322,20 @@ class TenhouClient(Client):
                     # tenhou confirmed that we called a meld
                     # we had to do discard after this
                     if meld.who == 0:
-                        logger.info('With hand: {}'.format(main_player.format_hand_for_print(meld_tile)))
-                        logger.info('Discard tile after called meld: {}'.format(
-                            TilesConverter.to_one_line_string([discard_option.tile_to_discard])))
+                        if meld.type != Meld.KAN and meld.type != Meld.CHANKAN:
+                            logger.info('With hand: {}'.format(main_player.format_hand_for_print(meld_tile)))
+                            logger.info('Discard tile after called meld: {}'.format(
+                                TilesConverter.to_one_line_string([discard_option.tile_to_discard])))
 
-                        self.player.tiles.append(meld_tile)
-                        discarded_tile = self.player.discard_tile(discard_option)
+                            self.player.tiles.append(meld_tile)
+                            discarded_tile = self.player.discard_tile(discard_option)
 
-                        self._send_message('<D p="{}"/>'.format(discarded_tile))
+                            self._send_message('<D p="{}"/>'.format(discarded_tile))
 
                 win_suggestions = ['t="8"', 't="9"', 't="12"', 't="13"']
                 # we win by other player's discard
                 if any(i in message for i in win_suggestions):
-                    sleep(1)
+                    sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
                     self._send_message('<N type="6" />')
 
                 if self.decoder.is_discarded_tile_message(message):
@@ -342,10 +354,29 @@ class TenhouClient(Client):
 
                     self.table.add_discarded_tile(player_seat, tile, if_tsumogiri)
 
-                    if 't="1"' in message or 't="4"' in message:
-                        is_kamicha_discard = False
+                    # open hand suggestions
+                    if 't=' in message:
+                        # for now I'm not sure about what sets was suggested to call with this numbers
+                        # will find it out later
+                        not_allowed_open_sets = ['t="2"', 't="5"', 't="7"']
+                        if any(i in message for i in not_allowed_open_sets):
+                            sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
+                            self._send_message('<N />')
+                            continue
+
                         # t="1" - call pon set
+                        # t="3" - call kan set
                         # t="4" - call chi set
+
+                        # kan
+                        if 't="3"' in message:
+                            if self.player.can_call_kan(tile, True):
+                                self._send_message('<N type="2" />')
+                                logger.info('We called a kan set!')
+                                continue
+
+                        # chi or pon
+                        is_kamicha_discard = False
                         if 't="4"' in message:
                             is_kamicha_discard = True
 
@@ -368,8 +399,9 @@ class TenhouClient(Client):
                                 tiles[0],
                                 tiles[1]
                             ))
+                        # this meld will not improve our hand
                         else:
-                            sleep(1)
+                            sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
                             self._send_message('<N />')
 
                 if 'owari' in message:

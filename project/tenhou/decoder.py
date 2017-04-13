@@ -199,7 +199,7 @@ class TenhouDecoder(object):
             meld.type = Meld.PON
             meld.tiles = [t0 + 4 * base, t1 + 4 * base, t2 + 4 * base]
         else:
-            meld.type = Meld.CHAKAN
+            meld.type = Meld.CHANKAN
             meld.tiles = [t0 + 4 * base, t1 + 4 * base, t2 + 4 * base, t4 + 4 * base]
         meld.called_tile = meld.tiles[called]
 
@@ -208,9 +208,10 @@ class TenhouDecoder(object):
         base = base_and_called // 4
         meld.type = Meld.KAN
         meld.tiles = [4 * base, 1 + 4 * base, 2 + 4 * base, 3 + 4 * base]
-        if meld.from_who:
-            called = base_and_called % 4
-            meld.called_tile = meld.tiles[called]
+        called = base_and_called % 4
+        meld.called_tile = meld.tiles[called]
+        # to mark closed\opened kans
+        meld.opened = meld.who != meld.from_who
 
     def parse_nuki(self, data, meld):
         meld.type = Meld.NUKI
