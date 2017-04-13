@@ -59,7 +59,7 @@ def onQQMessage(bot, contact, member, content):
         qq_group = contact
         if "Lattish" in content or "@ME" in content or "yunini" in content or 'lattish' in content:
             if "在吗" in content or "zaima" in content:
-                bot.SendTo(contact,'buzai cmn')
+                bot.SendTo(contact, 'buzai cmn')
             elif "缺人" in content:
                 if not is_playing:
                     bot.SendTo(contact, '3缺1再叫我，谢谢，你说缺人谁他妈知道你缺几个')
@@ -83,9 +83,20 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '不会自己看群公告啊，傻逼')
                 bot.SendTo(contact, '网页版：http://tenhou.net/3/?L2587')
                 bot.SendTo(contact, 'Flash 版：http://tenhou.net/0/?L2587')
+            elif "傻逼" in content or "真蠢" in content:
+                bot.SendTo(contact, '信不信我烟你')
+            elif "疯了" in content or "可爱" in content:
+                bot.SendTo(contact, '嘻嘻')
+            elif "闭嘴" in content or "好吵" in content:
+                bot.SendTo(contact, '哦，那你可以烟我啊')
+            elif "吃" in content:
+                bot.SendTo(contact, '不吃')
             else:
-                if random.random() > 0.5:
+                num = random.random()
+                if num > 0.66:
                     bot.SendTo(contact, '操你妈要求真多')
+                elif num > 0.33:
+                    bot.SendTo(contact, '人家不懂，不然先抽烟？')
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
         elif random.random() > 0.98:
@@ -93,22 +104,35 @@ def onQQMessage(bot, contact, member, content):
 
         if '烟' in content or '🚬' in content:
             if member.role == '普通成员':
-                if random.random() < 0.1:
-                    bot.GroupShut(qq_group, [member], t=60)
+                num = random.random()
+                if num < 0.1:
+                    bot.GroupShut(contact, [member], t=60)
                     if '烟呢' in content:
-                        bot.SendTo(qq_group, '这呢')
+                        bot.SendTo(contact, '这呢')
                     else:
-                        bot.SendTo(qq_group, '还真当我不懂啊，智障')
-                elif random.random() < 0.12:
-                    bot.GroupShut(qq_group, [member], t=3600)
+                        bot.SendTo(contact, '还真当我不懂啊，智障')
+                elif num < 0.12:
+                    bot.GroupShut(contact, [member], t=3600)
                     if '烟呢' in content:
-                        bot.SendTo(qq_group, '这呢')
+                        bot.SendTo(contact, '这呢')
                     else:
-                        bot.SendTo(qq_group, '今天试试这电子烟怎么样？')
+                        bot.SendTo(contact, '今天试试这电子烟怎么样？')
                 else:
-                    bot.SendTo(qq_group, "烟？什么意思？完全不懂啊")
+                    bot.SendTo(contact, "烟？什么意思？完全不懂啊")
             else:
-                bot.SendTo(qq_group, "别他妈跟我提烟好吗")
+                bot.SendTo(contact, "别他妈跟我提烟好吗")
+        if '麻吗' in content or "麻？" in content:
+            num = random.random()
+            if num < 0.5:
+                bot.SendTo(contact, '搞事搞事搞事')
+            else:
+                bot.SendTo(contact, '来啊，来屁胡啊')
+        if '机器人' in content:
+            bot.SendTo(contact, '操你妈别以为我不知道你在说我')
+        if 'latish' in content or 'lattishh' in content or 'latiish' in content:
+            bot.SendTo(contact, '智障能把我名字打对吗？？？')
+
+
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
