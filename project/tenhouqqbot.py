@@ -60,7 +60,7 @@ def onQQMessage(bot, contact, member, content):
     if contact.qq == '625219436':
         qq_group = contact
         if '烟' in content or '🚬' in content:
-            if member.role == '成员':
+            if member.role == '成员' and (member.name != '天野'):
                 if '烟呢' in content:
                     shut_seconds = random.randint(1, 10) * 60
                     bot.GroupShut(contact, [member], t=shut_seconds)
@@ -89,7 +89,14 @@ def onQQMessage(bot, contact, member, content):
             bot.SendTo(contact, '智障能把我名字打对吗？？？')
         elif any([x in content for x in my_names]):  # being mentioned
             if "在吗" in content or "zaima" in content:
-                bot.SendTo(contact, 'buzai cmn')
+                if not is_playing:
+                    num = random.random()
+                    if num < 0.5:
+                        bot.SendTo(contact, '摸了')
+                    else:
+                        bot.SendTo(contact, 'buzai cmn')
+                else:
+                    bot.SendTo(contact, '我正堇业着呢，叫也没用')
             elif "缺人" in content:
                 if not is_playing:
                     bot.SendTo(contact, '3缺1再叫我，谢谢，你说缺人谁他妈知道你缺几个')
@@ -121,6 +128,8 @@ def onQQMessage(bot, contact, member, content):
                 bot.SendTo(contact, '哦，那你可以烟我啊')
             elif "吃" in content:
                 bot.SendTo(contact, '不吃')
+            elif "飞了" in content:
+                bot.SendTo(contact, '丢人，你退群吧')
             else:
                 num = random.random()
                 if num < 0.3:
