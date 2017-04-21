@@ -33,13 +33,21 @@ class TenhouClient(Client):
 
     _count_of_empty_messages = 0
     _rating_string = None
+    _socket_mock = None
 
-    def __init__(self):
+    def __init__(self, socket_mock=None):
         super().__init__()
         self.statistics = Statistics()
+        self._socket_mock = socket_mock
 
     def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # for reproducer
+        if self._socket_mock:
+            self.socket = self._socket_mock
+            TenhouClient.SLEEP_BETWEEN_ACTIONS = 0
+        else:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         self.socket.connect((settings.TENHOU_HOST, settings.TENHOU_PORT))
 
     def authenticate(self):
@@ -244,10 +252,10 @@ class TenhouClient(Client):
                             self.table.add_discarded_tile(x, item, False)
 
                         for item in player['melds']:
-                            self.table.add_called_meld(x, item)
                             if x == 0:
                                 tiles = item.tiles
                                 main_player.tiles.extend(tiles)
+                            self.table.add_called_meld(x, item)
 
                 # draw and discard
                 if '<T' in message:
@@ -265,22 +273,19 @@ class TenhouClient(Client):
                         sleep(TenhouClient.SLEEP_BETWEEN_ACTIONS)
 
                         kan_type = self.player.can_call_kan(drawn_tile, False)
-
-                        discarded_tile = self.player.discard_tile()
-                        logger.info('Discard: {}'.format(TilesConverter.to_one_line_string([discarded_tile])))
-
-                        can_call_riichi = main_player.can_call_riichi()
-
                         if kan_type:
                             if kan_type == Meld.CHANKAN:
                                 meld_type = 5
                             else:
                                 meld_type = 4
-                            # we had to add discarded tile back to the hand
-                            self.player.tiles.append(discarded_tile)
                             self._send_message('<N type="{}" hai="{}" />'.format(meld_type, drawn_tile))
                             logger.info('We called a kan set!')
                             continue
+
+                        discarded_tile = self.player.discard_tile()
+                        logger.info('Discard: {}'.format(TilesConverter.to_one_line_string([discarded_tile])))
+
+                        can_call_riichi = main_player.can_call_riichi()
 
                         # let's call riichi
                         if can_call_riichi:
