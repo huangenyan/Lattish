@@ -62,6 +62,21 @@ def onQQMessage(bot, contact, member, content):
     global is_playing
     if contact.qq == '625219436':
         qq_group = contact
+        if '烟' in content or '🚬' in content:
+            if '烟呢' in content:
+                shut_seconds = random.randint(1, 10) * 60
+                bot.GroupShut(contact, [member], t=shut_seconds)
+                bot.SendTo(contact, '这呢，成全你这个抖 M', reSendOn1202=False)
+            else:
+                num = random.random()
+                if num < 0.2:
+                    bot.GroupShut(contact, [member], t=60)
+                    bot.SendTo(contact, '还真当我不懂啊，智障', reSendOn1202=False)
+                elif num < 0.22:
+                    bot.GroupShut(contact, [member], t=3600)
+                    bot.SendTo(contact, '今天试试这电子烟怎么样？', reSendOn1202=False)
+                else:
+                    bot.SendTo(contact, "烟？什么意思？完全不懂啊", reSendOn1202=False)
         if '麻吗' in content or "麻？" in content or "棍吗" in content or "棍？" in content:
             num = random.random()
             if num < 0.5:
