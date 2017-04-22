@@ -63,20 +63,23 @@ def onQQMessage(bot, contact, member, content):
     if contact.qq == '625219436':
         qq_group = contact
         if '烟' in content or '🚬' in content:
-            if '烟呢' in content:
-                shut_seconds = random.randint(1, 10) * 60
-                bot.GroupShut(contact, [member], t=shut_seconds)
-                bot.SendTo(contact, '这呢，成全你这个抖 M', reSendOn1202=False)
-            else:
-                num = random.random()
-                if num < 0.2:
-                    bot.GroupShut(contact, [member], t=60)
-                    bot.SendTo(contact, '还真当我不懂啊，智障', reSendOn1202=False)
-                elif num < 0.22:
-                    bot.GroupShut(contact, [member], t=3600)
-                    bot.SendTo(contact, '今天试试这电子烟怎么样？', reSendOn1202=False)
+            if member.role == '成员':
+                if '烟呢' in content:
+                    shut_seconds = random.randint(1, 10) * 60
+                    bot.GroupShut(contact, [member], t=shut_seconds)
+                    bot.SendTo(contact, '这呢，成全你这个抖 M', reSendOn1202=False)
                 else:
-                    bot.SendTo(contact, "烟？什么意思？完全不懂啊", reSendOn1202=False)
+                    num = random.random()
+                    if num < 0.2:
+                        bot.GroupShut(contact, [member], t=60)
+                        bot.SendTo(contact, '还真当我不懂啊，智障', reSendOn1202=False)
+                    elif num < 0.22:
+                        bot.GroupShut(contact, [member], t=3600)
+                        bot.SendTo(contact, '今天试试这电子烟怎么样？', reSendOn1202=False)
+                    else:
+                        bot.SendTo(contact, "烟？什么意思？完全不懂啊", reSendOn1202=False)
+            else:
+                bot.SendTo(contact, '渣渣管理员别跟我提烟', reSendOn1202=False)
         if '麻吗' in content or "麻？" in content or "棍吗" in content or "棍？" in content:
             num = random.random()
             if num < 0.5:
@@ -145,5 +148,5 @@ def onQQMessage(bot, contact, member, content):
 if __name__ == '__main__':
     bot = QQBot()
     botConnector = BotConnector(bot)
-    bot.Login(user="Lattish")
+    bot.Login(user='Lattish')
     bot.Run()
