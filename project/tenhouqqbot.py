@@ -63,7 +63,7 @@ def onQQMessage(bot, contact, member, content):
     if contact.qq == '625219436':
         qq_group = contact
         if '烟' in content or '🚬' in content:
-            if member.role == '成员':
+            if member.role == '普通成员':
                 if '烟呢' in content:
                     shut_seconds = random.randint(1, 10) * 60
                     bot.GroupShut(contact, [member], t=shut_seconds)
