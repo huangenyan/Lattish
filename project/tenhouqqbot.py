@@ -141,6 +141,7 @@ def onQQMessage(bot, contact, member, content):
                 else:
                     bot.SendTo(contact, '哎呀人家不懂了啦')
         elif random.random() > 0.98:
+            # Fudu
             bot.SendTo(contact, content)
 
 
