@@ -23,8 +23,7 @@ class BotConnector(object):
         if 'FINAL_RESULT' in message:
             result_list = re.search(r'FINAL_RESULT\s*(.*)', message).group(1)
             self.qbot.SendTo(qq_group, '刚刚跟你们这群菜鸡打了一局，结果感人')
-            result = re.search(r'\[(.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*)\]',
-                               result_list)
+            result = re.search(r'\[(.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*), (.*)\((.*)\) (.*)\]',result_list)
             for i in [1, 4, 7, 10]:
                 name = result.group(i)
                 point = result.group(i+1)
